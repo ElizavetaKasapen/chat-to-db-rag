@@ -1,0 +1,14 @@
+classify_input: "Is the following input a question or a statement? Answer only 'question' or 'statement':\n\n{user_input}"
+validate_statement: "Check if this statement is plausible: '{statement}'. Answer 'valid' or 'invalid'."
+check_duplicate: "Compare the following statements and give a similarity score 0-1:\n1) {statement}\n2) {page_content}. Return ONLY the score."
+reformulate_for_db: "Rephrase this statement in a clear, standardized way for database storage: '{statement}'"
+handle_question: "Answer the question below.
+  Use the provided context if it contains relevant information.
+  If the context does not have the answer, you can answer based on your own knowledge.
+  Do not repeat the question. Keep your answer concise.
+
+  Context:
+  {context}
+
+  Question:
+  {question}"

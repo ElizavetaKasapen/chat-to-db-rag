@@ -1,0 +1,7 @@
+langchain_ollama==0.3.6
+langchain_openai==0.3.31
+langchain_qdrant==0.2.0
+python-dotenv==1.1.1
+PyYAML==6.0.2
+qdrant_client==1.15.1
+streamlit==1.48.1

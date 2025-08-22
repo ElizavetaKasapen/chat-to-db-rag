@@ -1,0 +1,21 @@
+{
+    "vectorstore": {
+        "url": "http://localhost:6333",
+        "collection_name": "test_chat-to-db-1536",
+        "vector_size": 1536
+    },
+    "models": {
+        "provider": "openai",
+        "openai": {
+            "name": "gpt-3.5-turbo"
+        },
+        "ollama": {
+            "name": "llama3.1:8b"
+        }
+    },
+    "search": {
+        "doc_num": 5,
+        "vectorstore_threshold": 0.7,
+        "llm_threshold": 0.8
+    }
+}

@@ -45,7 +45,7 @@ class QdrantStoreManager:
         ).count
 
     
-    def similarity_search(self, query: str, k: int = 5):
+    def similarity_search(self, query: str, k: int = 5, vectorstore_threshold: float = 0.7):
         """Search for the most similar documents to a query."""
-        return self.vectorstore.similarity_search(query, k=k)
+        return self.vectorstore.similarity_search(query, k=k, score_threshold = vectorstore_threshold)
 
