@@ -32,9 +32,8 @@ def get_store_manager():
 
 store_manager = get_store_manager()
 
-# helper functions
 def get_response(prompt):
-    response = llm.invoke(prompt)#.content
+    response = llm.invoke(prompt)
     response = getattr(response, "content", response).lower().strip()
     return response
 
@@ -73,7 +72,7 @@ def check_duplicate(statement, threshold=0.8):
         # Use LLM to compare similarity semantically, so we will not have the same info in DB twise
         prompt_template = get_check_duplicate_prompt()
         response = run_prompt(prompt_template, statement=statement, page_content=r.page_content)
-        score = float(response)  # Assume LLM outputs a numeric score
+        score = float(response)  
         logging.info(f"score: {score}")
         if score >= threshold:
             return True
