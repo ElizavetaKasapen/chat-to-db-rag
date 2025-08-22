@@ -133,27 +133,27 @@ When using **Ollama / LLaMA models**, the system sometimes misclassifies valid u
 ## 🛠️ TODO
 
 1. **Prompt Engineering & Validation**
-  -[ ]  Experiment with different prompt templates to reduce misclassifications (especially with Ollama/LLaMA).
-  -[ ]  Fine-tune thresholds (`vectorstore_threshold`, `llm_threshold`) for more accurate duplicate detection.
+- [ ] Experiment with different prompt templates to reduce misclassifications (especially with Ollama/LLaMA).
+- [ ] Fine-tune thresholds (`vectorstore_threshold`, `llm_threshold`) for more accurate duplicate detection.
 
 2. **Knowledge Base Improvements**
-  -[ ]  Add more examples of personal and factual statements to test edge cases.
-  -[ ]  Implement stricter duplicate-check logic with similarity scoring.
-  -[ ]  Explore ways to log rejected statements for later manual review.
+- [ ] Add more examples of personal and factual statements to test edge cases.
+- [ ] Implement stricter duplicate-check logic with similarity scoring.
+- [ ] Explore ways to log rejected statements for later manual review.
 
 3. **User Interaction Enhancements**
-  -[ ]  Improve chatbot responses for smoother clarification when a statement is rejected.
-  -[ ]  ❗Implement handling of contradictory statements: prompt the user to clarify which version is correct and, if necessary, remove outdated or incorrect statements from the database.
+- [ ] Improve chatbot responses for smoother clarification when a statement is rejected.
+- [ ] ❗Implement handling of contradictory statements: prompt the user to clarify which version is correct and, if necessary, remove outdated or incorrect statements from the database.
 
 
 4. **LLM & Embedding Flexibility**
-  -[ ]  Benchmark OpenAI vs. Ollama performance in classification and validation tasks.
-  -[ ]  **Add the possibility to use other LLMs and embeddings** beyond OpenAI and Ollama.
+- [ ] Benchmark OpenAI vs. Ollama performance in classification and validation tasks.
+- [ ] **Add the possibility to use other LLMs and embeddings** beyond OpenAI and Ollama.
 
 5. **Proof of Concept Expansion**
-  -[ ]  Run more experiments covering all workflow branches (valid storage, invalid rejection, duplicate detection).
-  -[ ]  Prepare a small demo dataset to showcase database growth over time through user interaction.
-  -[ ]  Document limitations and potential production-scale improvements.
+- [ ] Run more experiments covering all workflow branches (valid storage, invalid rejection, duplicate detection).
+- [ ] Prepare a small demo dataset to showcase database growth over time through user interaction.
+- [ ] Document limitations and potential production-scale improvements.
 
 
 ## 🔮 Future Work
