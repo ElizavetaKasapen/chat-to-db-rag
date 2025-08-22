@@ -13,15 +13,15 @@ When a user submits input, the system first determines whether it is a **questio
 - If it is a **question**, the chatbot retrieves related information from the database and provides a concise answer. If no context is found, it relies on the LLM’s general knowledge.  
 - If it is a **statement**, the chatbot performs several checks before storing it:  
   1. **Plausibility check** – The LLM validates whether the information aligns with common knowledge (e.g., rejecting *“The Earth is flat”*).  
-  2. **Duplicate check** – The system searches the vector database for semantically similar knowledge. If a close match is found (based on a configurable similarity threshold), the statement is treated as already recorded.  
+  2. **Duplicate check** – The system searches the vector database for semantically similar knowledge. If a close match is found, the statement is treated as already recorded.  
 
-If the statement passes validation, it is **reformulated** into a standardized, database-ready format using the LLM, and then added to Qdrant.  
+    If the statement passes validation, it is **reformulated** into a standardized, database-ready format using the LLM, and then added to Qdrant.  
 
-If the statement fails validation, the chatbot handles it gracefully:
-- For **implausible information**, it responds:  
-  *“"This statement seems invalid or implausible."”*  
-- For **duplicates**, it replies:  
-  *“This information already exists in the database.”*  
+    If the statement fails validation, the chatbot handles it gracefully:
+    - For **implausible information**, it responds:  
+    *“"This statement seems invalid or implausible."”*  
+    - For **duplicates**, it replies:  
+    *“This information already exists in the database.”*  
 
 This design ensures that the knowledge base is **accurate, consistent, and free of redundant or invalid data**, while still offering a user-friendly conversational experience.
 
@@ -137,18 +137,17 @@ When using **Ollama / LLaMA models**, the system sometimes misclassifies valid u
 - [ ] Fine-tune thresholds (`vectorstore_threshold`, `llm_threshold`) for more accurate duplicate detection.
 
 2. **Knowledge Base Improvements**
+- [ ] ❗Implement handling of contradictory statements: prompt the user to clarify which version is correct and, if necessary, remove outdated or incorrect statements from the database.
 - [ ] Add more examples of personal and factual statements to test edge cases.
 - [ ] Implement stricter duplicate-check logic with similarity scoring.
 - [ ] Explore ways to log rejected statements for later manual review.
 
 3. **User Interaction Enhancements**
 - [ ] Improve chatbot responses for smoother clarification when a statement is rejected.
-- [ ] ❗Implement handling of contradictory statements: prompt the user to clarify which version is correct and, if necessary, remove outdated or incorrect statements from the database.
-
 
 4. **LLM & Embedding Flexibility**
 - [ ] Benchmark OpenAI vs. Ollama performance in classification and validation tasks.
-- [ ] **Add the possibility to use other LLMs and embeddings** beyond OpenAI and Ollama.
+- [ ] Add the possibility to use other LLMs and embeddings beyond OpenAI and Ollama.
 
 5. **Proof of Concept Expansion**
 - [ ] Run more experiments covering all workflow branches (valid storage, invalid rejection, duplicate detection).
@@ -167,17 +166,9 @@ When using **Ollama / LLaMA models**, the system sometimes misclassifies valid u
    - Implement versioning and auditing for statements added to the database.
    - Introduce fine-grained control over thresholds, relevance scoring, and duplicate detection logic.
 
-4. **Model Integration**
-   - Support additional LLMs and embedding models.
-   - Experiment with fine-tuning models for domain-specific tasks or improved statement validation.
-
-5. **UI/UX Enhancements**
+4. **UI/UX Enhancements**
    - Display stored/reformulated statements interactively.
-   - Offer feedback to users when statements are rejected or duplicates are detected.
-
-6. **Scalability & Performance**
-   - Optimize vectorstore queries and LLM calls for faster response.
-   - Implement caching mechanisms for embeddings and LLM results.
+   - Offer feedback to users when statements are rejected and duplicates are detected.
 
 
 ## 👩‍💻 Authors
