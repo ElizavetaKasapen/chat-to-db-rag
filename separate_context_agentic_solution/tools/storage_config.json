@@ -1,0 +1,4 @@
+{
+    "context_representation":"main_objects",
+    "persist_directory":"./chroma_db_separate_context_main_objects"
+}
