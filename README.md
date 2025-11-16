@@ -1,175 +1,230 @@
-# Chat-to-DB
-From conversations to structured data - a RAG-based system for automatic database population.
+# Context-Based Memory Management System
 
-## 📌 Project Overview
+A multi-agent RAG (Retrieval-Augmented Generation) system that organizes information into semantic contexts and manages facts with intelligent routing, extraction, and question-answering capabilities.
 
-This project is a **knowledge-driven chatbot** that integrates a **Qdrant vector database** with **LLMs** (OpenAI or Ollama) to build a structured knowledge base from user interactions.
+## Overview
 
-The chatbot works in two main modes:  
-- **Handling Questions**: retrieving relevant information from the database and generating answers.  
-- **Processing Statements**: validating and storing new knowledge into the database.  
+This project implements an AI-powered memory management system that:
+- Automatically extracts facts from user input
+- Organizes facts into semantic contexts using embeddings or summaries
+- Routes queries to appropriate specialized agents
+- Answers questions by searching through stored knowledge
+- Manages memory updates intelligently to avoid redundancy
 
-When a user submits input, the system first determines whether it is a **question** or a **statement**.  
-- If it is a **question**, the chatbot retrieves related information from the database and provides a concise answer. If no context is found, it relies on the LLM’s general knowledge.  
-- If it is a **statement**, the chatbot performs several checks before storing it:  
-  1. **Plausibility check** – The LLM validates whether the information aligns with common knowledge (e.g., rejecting *“The Earth is flat”*).  
-  2. **Duplicate check** – The system searches the vector database for semantically similar knowledge. If a close match is found, the statement is treated as already recorded.  
+## Architecture
 
-    If the statement passes validation, it is **reformulated** into a standardized, database-ready format using the LLM, and then added to Qdrant.  
+### Core Components
 
-    If the statement fails validation, the chatbot handles it gracefully:
-    - For **implausible information**, it responds:  
-    *“"This statement seems invalid or implausible."”*  
-    - For **duplicates**, it replies:  
-    *“This information already exists in the database.”*  
-
-This design ensures that the knowledge base is **accurate, consistent, and free of redundant or invalid data**, while still offering a user-friendly conversational experience.
-
-
-## 🚀 Features
-
-- **Dual Model Support** – Choose between **OpenAI** (e.g., GPT-3.5-turbo) and **Ollama** (e.g., LLaMA) for embeddings and LLM responses.
-- **Knowledge Base Management**
-  - Automatically classifies user inputs as **questions** or **statements**.
-  - Validates statements for plausibility before storage.
-  - Checks for duplicates using semantic similarity and an LLM-based double-check.
-  - Reformulates valid statements into a standardized format before adding them to the database.
-- **Question Answering**
-  - Retrieves relevant documents from Qdrant.
-  - Uses both context and LLM reasoning to answer user queries.
-- **Configurable Search Parameters**
-  - `doc_num`: Number of documents retrieved per query (default: 5).
-  - `vectorstore_threshold`: Similarity threshold for vectorstore retrieval (default: 0.7).
-  - `llm_threshold`: Threshold for LLM-based duplicate detection (default: 0.8).
-- **Prompt Templates in YAML** – Easily customize how classification, validation, duplicate checking, and answering are performed.
-- **Streamlit Interface** – Clean and interactive chat interface with session-based message history.
-- **Error Handling**
-  - Invalid statements → flagged with a polite response.
-  - Duplicate statements → user is informed they already exist.
-
-
-## ⚙️ Setup
-1. Clone the repository
-```sh
-git clone https://github.com/ElizavetaKasapen/chat-to-db-rag.git
-cd chat-to-db-rag
 ```
-2. Install the dependencies
-Create a virtual environment and install the requirements:
-```sh
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+core/
+├── agents.py               # Agent definitions and LLM configurations
+├── workflow.py             # Main processing pipeline
+├── prompts.yaml            # System prompts for all agents
+├── parallel_workflow.py    # (Parallel processing support) #working bad now
+└── tools/
+    ├── context_representation.py  # Context embedding/summary generation
+    ├── storage_manager.py         # Chroma DB abstraction layer
+    ├── storage_tools.py           # LangChain tool wrappers
+    └── storage_config.json        # Storage configuration
+```
+
+### Agent System
+
+The system uses four specialized agents:
+
+1. **Supervisor Agent**: Routes user requests to the appropriate handler
+   - Determines if input contains facts to extract or questions to answer
+   - Reformulates requests for clarity
+
+2. **Fact Extractor**: Extracts structured facts from natural language
+   - Parses user input into discrete factual statements
+   - Formats facts as "Subject: fact" pairs
+
+3. **Memory Manager**: Handles fact storage and updates
+   - Adds new facts to existing contexts
+   - Updates existing facts when similar information is found
+   - Prevents duplicate storage
+
+4. **Questions Manager**: Answers queries using stored knowledge
+   - Searches contexts and facts for relevant information
+   - Synthesizes responses from multiple sources
+
+## Key Features
+
+### Context Representation Strategies
+
+The system supports multiple strategies for representing contexts:
+
+- **`mean`**: Average embedding of all facts in a context
+- **`summary`**: LLM-generated concise summary
+- **`main_objects`**: Extracted key entities (people, places, organizations)
+- **`concat`**: Concatenates facts in the context
+
+Configure via `storage_config.json`:
+
+```json
+{
+  "persist_directory": "./chroma_db_separate_context",
+  "context_representation": "mean"
+}
+```
+
+### Storage Architecture
+
+Built on ChromaDB with a two-tier structure:
+
+- **Contexts Collection**: Stores one entry per semantic context
+- **Facts Collections**: One collection per context containing individual facts
+
+This design enables:
+- Fast similarity search across contexts
+- Efficient fact retrieval within relevant contexts
+- Automatic context regeneration when facts change
+
+## Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd <project-directory>
+
+# Install dependencies
 pip install -r requirements.txt
+
 ```
 
-3. Start Qdrant
-```sh
-docker run -p 6333:6333 qdrant/qdrant
+## Usage
+
+### Basic Example
+
+```python
+from core.workflow import process_user_input
+
+# Initialize conversation
+chat_history = []
+
+# Store information
+response = process_user_input(
+    "John Smith is a software engineer at TechCorp. He graduated from MIT in 2015.",
+    chat_history
+)
+print(response)
+# Output: Created context '<uuid>' with 2 facts...
+
+# Ask questions
+response = process_user_input(
+    "Where did John Smith go to school?",
+    chat_history
+)
+print(response)
+# Output: John Smith graduated from MIT in 2015.
 ```
 
-## 🛠️ Configuration
+### Customizing Prompts
 
-The configuration is defined in:
-*config.json*
+All agent prompts are defined in `core/prompts.yaml`:
 
-- **vectorstore**: Qdrant URL, collection name, vector size (*should match with your embedding model*).
-
-- **models**: Model provider, model name.
-
-- **search**: Number of documents to retrieve, similarity thresholds.
-
-## 📁 Project Structure
-```
-├── config.json             # Main configuration
-├── core.py                 # Core functions: classify_input, validate_statement, etc.
-├── main.py                 # Streamlit application
-├── prompts.yaml            # Prompt templates
-├── README.md               
-├── requirements.txt        # Requirements to install in your environment
-├── vectorstore.py          # Qdrant vectorstore manager
-├── utils/
-│   ├── getters.py          # Getters for configs, models, and prompts
-│   └── loader.py           # Load JSON/YAML configs
-├── chatbot.env             # Environment variables (needed for OpenAI)
+```yaml
+supervisor: |
+  You are a routing supervisor...
+  
+fact_extractor: |
+  Extract all factual statements...
+  
+memory_manager: |
+  You manage the knowledge base...
+  
+questions_manager: |
+  Answer questions using available tools...
 ```
 
-## 🚀 Usage
-Start the Streamlit app:
+## API Reference
+
+### Main Functions
+
+#### `process_user_input(user_input: str, chat_history: list) -> str`
+
+Processes user input through the complete workflow.
+
+**Args:**
+- `user_input`: User's text message
+- `chat_history`: Last N conversation messages
+
+**Returns:** AI-generated response string
+
+### Storage Tools
+
+All tools are available as LangChain `StructuredTool` objects:
+
+- `create_context_tool`: Create new context with initial facts
+- `add_fact_tool`: Add fact to existing context
+- `update_fact_tool`: Modify existing fact
+- `delete_fact_tool`: Remove fact from context
+- `context_similarity_search_tool`: Find most similar context
+- `fact_similarity_search_tool`: Search facts within a context
+- `get_contexts_tool`: List all contexts
+- `get_facts_in_context_tool`: Get all facts in a context
+
+## How It Works
+
+### Workflow Overview
+
+1. **User Input** → Supervisor Agent
+2. **Routing Decision**:
+   - **Extract Facts Path**:
+     - Extract facts from text
+     - Generate context representation
+     - Search for similar existing context
+     - If found: Check for duplicate facts, add/update as needed
+     - If not found: Create new context
+   - **Question Path**:
+     - Search relevant contexts
+     - Retrieve similar facts
+     - Generate answer
+
+### Memory Management Logic
+
+When new facts are added:
+
+1. Generate embedding/summary of new facts
+2. Search for semantically similar context (cosine similarity)
+3. For each fact:
+   - Retrieve top-K similar existing facts
+   - Memory Manager Agent decides: add new or update existing
+4. Context representation is automatically regenerated
+
+## Advanced Features
+
+### Context Regeneration
+
+Contexts are automatically updated when facts change:
+
+```python
+# Adding a fact triggers regeneration
+manager.add_fact(context_id, "New fact")
+# Context embedding/summary is recomputed from all facts
 ```
-streamlit run main.py
-```
-Enter your question or statement.
 
+## Limitations
 
-## 🧪 Experiments
+- Requires local Ollama installation for LLM inference
+- GPU recommended for embedding generation
+- Context regeneration can be slow with many facts
+- No built-in authentication or multi-user support
 
-To validate the system, I ran several small experiments:
+## Future Enhancements
 
-1. **Question Classification**  
-   - I asked a basic question to test whether the chatbot could correctly classify inputs as *questions*.  
-   - ✅ The system identified it as a question and processed it accordingly.
+- [ ] Add fact versioning and history tracking
+- [ ] Implement context merging for related topics
+- [ ] Support for structured data (tables, lists)
+- [ ] Web interface with persistent sessions
+- [ ] Export/import functionality for knowledge bases
+- [ ] Confidence scoring for fact updates vs. additions
 
-2. **Invalid Statement Check**  
-   - I provided a statement that contradicts common knowledge (e.g., *“The Earth is flat”*).  
-   - ✅ The system flagged it as implausible and responded with a polite rejection:  
-   *"This statement seems invalid or implausible."*
-![Classification and fact validation](readme_images/questoin_and_fact_validation.PNG)
-<p align="center"><em>Classification and fact validation</em></p>
+## Contributing
 
-3. **Valid Statement Storage & Retrieval**  
-   - I told the model: *“I have Sunday night plans.”*  
-   - ✅ The system confirmed that the statement was stored in the database and also showed me its **reformulated version**.  
-   - Later, I asked: *“Do you know about Sunday night?”*  
-   - ✅ The system retrieved the stored information from the DB and answered correctly, demonstrating that the **knowledge base is being built and queried as intended**.
-![Valid Statement Storage & Retrieval](readme_images/statement_saving.PNG)
-<p align="center"><em>Valid Statement Storage & Retrieval</em></p>
-
-## 👉❗ Problem
-When using **Ollama / LLaMA models**, the system sometimes misclassifies valid user statements:
-![Ollama misclassification](readme_images/llama_problem.jpg)
-<p align="center"><em>Ollama misclassification</em></p>
-
-
-## 🛠️ TODO
-
-1. **Prompt Engineering & Validation**
-- [ ] Experiment with different prompt templates to reduce misclassifications (especially with Ollama/LLaMA).
-- [ ] Fine-tune thresholds (`vectorstore_threshold`, `llm_threshold`) for more accurate duplicate detection.
-
-2. **Knowledge Base Improvements**
-- [ ] ❗Implement handling of contradictory statements: prompt the user to clarify which version is correct and, if necessary, remove outdated or incorrect statements from the database.
-- [ ] Add more examples of personal and factual statements to test edge cases.
-- [ ] Implement stricter duplicate-check logic with similarity scoring.
-- [ ] Explore ways to log rejected statements for later manual review.
-
-3. **User Interaction Enhancements**
-- [ ] Improve chatbot responses for smoother clarification when a statement is rejected.
-
-4. **LLM & Embedding Flexibility**
-- [ ] Benchmark OpenAI vs. Ollama performance in classification and validation tasks.
-- [ ] Add the possibility to use other LLMs and embeddings beyond OpenAI and Ollama.
-
-5. **Proof of Concept Expansion**
-- [ ] Run more experiments covering all workflow branches (valid storage, invalid rejection, duplicate detection).
-- [ ] Prepare a small demo dataset to showcase database growth over time through user interaction.
-- [ ] Document limitations and potential production-scale improvements.
-
-
-## 🔮 Future Work
-1. **Multi-User Support**
-   - Enable the system to manage multiple concurrent users with personalized session memory.
-
-2. **Persistent Memory**
-   - Save chat and context history to allow ongoing conversations and long-term knowledge accumulation.
-
-3. **Advanced Knowledge Base Management**
-   - Implement versioning and auditing for statements added to the database.
-   - Introduce fine-grained control over thresholds, relevance scoring, and duplicate detection logic.
-
-4. **UI/UX Enhancements**
-   - Display stored/reformulated statements interactively.
-   - Offer feedback to users when statements are rejected and duplicates are detected.
-
-
-## 👩‍💻 Authors
-- **Yelyzaveta Kasapien**: y.kasapien@student.unisi.it
+Contributions welcome! Please ensure:
+- Code follows existing style conventions
+- New agents include prompts in `prompts.yaml`
+- Storage operations maintain context consistency
+- Tests cover core functionality
