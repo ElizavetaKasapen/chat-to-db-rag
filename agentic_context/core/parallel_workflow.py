@@ -1,3 +1,5 @@
+# Doesn't seem to work
+
 """
 workflow.py
 
@@ -17,11 +19,46 @@ from core.tools.storage_tools import (
     create_context_tool,
     context_representation_builder
 )
+import asyncio
 from core import agents as logic
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s : %(message)s"
 )
+
+
+async def process_single_fact(fact: str, similar_context: str) -> str:
+    """
+    Process a single fact asynchronously.
+    
+    Args:
+        fact: The fact text to process
+        similar_context: The context ID to search within
+        
+    Returns:
+        str: The result message from memory manager
+    """
+    existing_similar_facts = fact_similarity_search_tool.run({
+        "context_id": similar_context,
+        "query": fact,
+        "k": 5
+    })
+
+    request = {
+        "messages": [
+            ChatMessage(role="control", content="thinking"),
+            HumanMessage(
+                content=f"\ncontext_id:{similar_context}\nFact:{fact}\nExisting similar facts: {existing_similar_facts}")
+        ]
+    }
+
+    result = await logic.memory_manager_agent.ainvoke(
+        request, config={}, print_mode="debug")
+    
+    for message in result["messages"]:
+        message.pretty_print()
+    
+    return result['messages'][-1].content
 
 
 def process_user_input(user_input: str, chat_history: list) -> str:
@@ -64,27 +101,18 @@ def process_user_input(user_input: str, chat_history: list) -> str:
                 {"query": input_context_text})
             print(f"similar_context: {similar_context}")
             if similar_context:
-                # Update memory for each fact
-                for fact in facts:
-                    existing_similar_facts = fact_similarity_search_tool.run({ #use get_facts_in_context_tool to get all facts in the context
-                        "context_id": similar_context,
-                        "query": fact,
-                        "k": 5 #TODO create config?
-                    })
-
-                    request = {
-                        "messages": [
-                            ChatMessage(role="control", content="thinking"),
-                            HumanMessage(
-                                content=f"\ncontext_id:{similar_context}\nFact:{fact}\nExisting similar facts: {existing_similar_facts}")
-                        ]
-                    }
-
-                    result = logic.memory_manager_agent.invoke(
-                        request, config={}, print_mode="debug")
-                    for message in result["messages"]:
-                        message.pretty_print()
-                    answer += result['messages'][-1].content + "\n"
+                  # Process all facts in parallel (OPTIMIZED LOOP!)
+                tasks = [process_single_fact(fact, similar_context) for fact in facts]
+                
+                # Create new event loop for Streamlit thread
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    results = loop.run_until_complete(asyncio.gather(*tasks))
+                finally:
+                    loop.close()
+                
+                answer = "\n".join(results)
 
             else:
                 # No similar context: create new context
