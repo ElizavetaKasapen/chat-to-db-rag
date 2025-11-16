@@ -1,3 +1,7 @@
 *.env
 .vscode
 __pycache__
+.venv
+created_storages
+dataset
+check_db.py
