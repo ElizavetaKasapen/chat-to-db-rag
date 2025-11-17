@@ -205,12 +205,102 @@ manager.add_fact(context_id, "New fact")
 # Context embedding/summary is recomputed from all facts
 ```
 
-## Limitations
+## Evaluation
 
-- Requires local Ollama installation for LLM inference
-- GPU recommended for embedding generation
-- Context regeneration can be slow with many facts
-- No built-in authentication or multi-user support
+The system includes a **two-stage evaluation framework** to analyze its memory management performance:
+
+### 1. Ingestion Phase
+- Articles from a dataset are processed through the workflow.  
+- Facts are extracted, contexts are created or updated, and memory is managed intelligently.  
+- Metadata is tracked to map facts to their original articles and topics.  
+
+### 2. Evaluation Phase
+Multiple metrics are calculated to assess context quality, fact importance, and redundancy.
+
+---
+
+### Metrics
+
+**Context Clustering Metrics**  
+- **Purity**: Fraction of facts in a context belonging to the dominant topic.  
+- **Adjusted Rand Index (ARI)**: Measures agreement between system-assigned contexts and ground-truth topics (1 = perfect clustering).  
+- **Normalized Mutual Information (NMI)**: Evaluates similarity between predicted and true clusters.  
+- **Context Distribution**: Number of facts per context, dominant topic, and purity per context.
+
+**Fact Importance Metrics**  
+- **Frequency**: How often similar facts appear within a context.  
+- **Centrality**: Semantic closeness of a fact to its context representation.  
+- **Distinctiveness (IDF-style)**: Uniqueness of a fact across all contexts.  
+- **Specificity**: Approximation of informational detail based on fact length.  
+- **Overall Importance**: Weighted combination of the above.
+
+**Redundancy Metrics**  
+- **Pairwise Similarity**: Cosine similarity between embeddings of facts within the same context.  
+- **High Redundancy Pairs**: Number of fact pairs with similarity > 0.85.  
+- **Average / Max / Std Similarity**: General measure of redundancy within contexts.
+
+### Evaluation part usage
+Run 
+```bash
+python evaluation.py /path/to/dataset --output-dir ./results
+```
+
+Expected dataset structure:
+```bash
+dataset/
+├── topic1/
+│   ├── article1.txt
+│   └── article2.txt
+└── topic2/
+    └── article1.txt
+```
+---
+
+### High-Level Summary of Analysis
+
+Across **4 context representation strategies** (`mean`, `summary`, `main_objects`, `concat`):
+
+**Mean**  
+- Perfect clustering: ARI=1, NMI=1  → matches ground-truth topics  
+- Low redundancy, fewer but cleaner facts  
+- Fast and semantically stable  
+- **Recommendation**: Best for clean topic clustering and retrieval  
+
+**Main Objects**  
+- Generates the most facts → highest informational recall  
+- Slightly fragmented clusters, higher redundancy 
+- ARI/NMI good but not perfect  
+- Computationally expensive  
+- **Recommendation**: Use for maximum fact coverage, not clustering  
+
+**Summary / Concatenation**  
+- Noisy, produce more contexts (over-clustering)  
+- Higher redundancy, worse ARI (0.59–0.86)  
+- Summary captures more specific language (higher IDF) but less consistency  
+- **Recommendation**: Use if more detailed retrieval is needed, but not for clustering  
+
+**Concatenation**  
+- Unstable clusters 
+- ARI/NMI poor and inconsistent  
+- Moderate redundancy  
+- **Recommendation**: Only as a quick baseline; suboptimal for production  
+
+---
+
+### Overall Recommendation
+
+| Representation  | Best For                    | Quality | Notes                                    |
+|-----------------|-----------------------------|---------|------------------------------------------|
+| **MEAN**        | Topic grouping & clustering | 5       | Stable, perfect ARI/NMI, low redundancy  |
+| Main Objects    | Maximum fact recall         | 4       | Good clustering, high redundancy         |
+| Summary         | Detailed retrieval          | 3       | More clusters, moderate NMI, verbose     |
+| Concatenation   | Quick baseline              | 2       | Noisy clusters, unstable                 |
+
+** Final Conclusion:**  
+For **stable topic clustering** and **minimal redundancy**, use **Mean**.  
+For **maximum fact extraction**, use **Main Objects**.  
+Summary can be used when moderate detail is desired. Concatenation is generally suboptimal.
+
 
 ## Future Enhancements
 
@@ -221,10 +311,3 @@ manager.add_fact(context_id, "New fact")
 - [ ] Export/import functionality for knowledge bases
 - [ ] Confidence scoring for fact updates vs. additions
 
-## Contributing
-
-Contributions welcome! Please ensure:
-- Code follows existing style conventions
-- New agents include prompts in `prompts.yaml`
-- Storage operations maintain context consistency
-- Tests cover core functionality
