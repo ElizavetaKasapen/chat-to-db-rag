@@ -81,14 +81,14 @@ class ContextFactManager:
         print(f"Added facts to fact store context_id: {context_id}, facts {fact_texts}")
         if isinstance(representation, np.ndarray):
             self._contexts_store._collection.add(
-                ids=context_id,
-                documents=f"Mean embedding of '{context_id}'",
-                embeddings=representation
+                ids=[context_id],
+                documents=[f"Mean embedding of '{context_id}'"],
+                embeddings=[representation]
             )
         elif isinstance(representation, str):
             self._contexts_store.add_texts(
-                ids=context_id,
-                texts=representation,
+                ids=[context_id],
+                texts=[representation],
             )
         else:
             raise TypeError(
@@ -162,16 +162,21 @@ class ContextFactManager:
 
     # Search
 
-    def context_similarity_search(self, query, k=1):
+    def context_similarity_search(self, query, k=1, threshold=0.8): #TODO move to config
         """Return context_id most similar to query (text or vector)."""
         if isinstance(query, np.ndarray):
-            results = self._contexts_store.similarity_search_by_vector(
-                query.tolist(), k=k
-            )
+            results = self._contexts_store.similarity_search_by_vector_with_relevance_scores( query.tolist(), k=k)
         else:
-            results = self._contexts_store.similarity_search(query, k=k)
+           results = self._contexts_store.similarity_search_with_score(query, k=k)
+        if not results:
+            return None
+        print(f"RESULTS: { results}")
+        doc, score = results[0]
+        print(f"SIMILARITY SCORE: {score}")
+        if score < threshold:  
+            return doc.id
+        return None
 
-        return results[0].metadata["context_id"] if results else None
 
     def fact_similarity_search(self, context_id: str, query: str, k=5):
         """Find most similar facts inside a given context."""
