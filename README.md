@@ -297,9 +297,9 @@ Across **4 context representation strategies** (`mean`, `summary`, `main_objects
 | Concatenation   | Quick baseline              | 2       | Noisy clusters, unstable                 |
 
 **Final Conclusion:**  
-For **stable topic clustering** and **minimal redundancy**, use **Mean**.  
-For **maximum fact extraction**, use **Main Objects**.  
-Summary can be used when moderate detail is desired. Concatenation is generally suboptimal.
+-> For **stable topic clustering** and **minimal redundancy**, use **Mean**.  
+-> For **maximum fact extraction**, use **Main Objects**.  
+-> Summary can be used when moderate detail is desired. Concatenation is generally suboptimal.
 
 
 ## Future Enhancements
