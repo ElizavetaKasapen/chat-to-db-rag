@@ -287,7 +287,7 @@ Across **4 context representation strategies** (`mean`, `summary`, `main_objects
 
 ---
 
-### Overall Recommendation
+### Comparison table
 
 | Representation  | Best For                    | Quality | Notes                                    |
 |-----------------|-----------------------------|---------|------------------------------------------|
