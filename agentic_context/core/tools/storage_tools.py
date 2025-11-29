@@ -13,6 +13,7 @@ from .context_representation import ContextRepresentation
 # Load config
 CONFIG_PATH = path.join(path.dirname(__file__), "storage_config.json")
 
+
 def load_storage_config(path=CONFIG_PATH):
     with open(path, "r") as f:
         return json.load(f)
@@ -83,4 +84,18 @@ get_facts_in_context_tool = StructuredTool.from_function(
     func=manager.get_facts_in_context,
     name="get_facts_in_context",
     description="List all facts belonging to a context."
+)
+
+
+get_context_embedding_tool = StructuredTool.from_function(
+    func=manager.get_context_embedding,
+    name="get_context_embedding",
+    description="Return the embedding for a given context ID."
+)
+
+
+get_facts_embeddings_in_context_tool = StructuredTool.from_function(
+    func=manager.get_facts_embeddings_in_context,
+    name="get_facts_embeddings",
+    description="Return the embedding for all facts according to a given context ID."
 )

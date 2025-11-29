@@ -50,7 +50,8 @@ class ContextFactManager:
         return Chroma(
             collection_name="contexts",
             persist_directory=self.persist_directory,
-            embedding_function=self.embeddings
+            embedding_function=self.embeddings,
+            collection_metadata={"hnsw:space": "cosine"} #TURNED ALL TO COSINE SIMILARITY
         )
 
     def _get_facts_store(self, context_id: str):
@@ -58,7 +59,8 @@ class ContextFactManager:
         return Chroma(
             collection_name=context_id,
             persist_directory=self.persist_directory,
-            embedding_function=self.embeddings
+            embedding_function=self.embeddings,
+            collection_metadata={"hnsw:space": "cosine"} #TURNED ALL TO COSINE SIMILARITY
         )
 
 
@@ -162,19 +164,21 @@ class ContextFactManager:
 
     # Search
 
-    def context_similarity_search(self, query, k=1, threshold=0.8): #TODO move to config
+    def context_similarity_search(self, query, k=1, threshold=0.4): #TODO move to config - do 0.4 for retrieving data, 0.2 for memory manager
         """Return context_id most similar to query (text or vector)."""
         if isinstance(query, np.ndarray):
-            results = self._contexts_store.similarity_search_by_vector_with_relevance_scores( query.tolist(), k=k)
+           results = self._contexts_store.similarity_search_by_vector_with_relevance_scores( query.tolist(), k=k) #Returns Distance. Lower score represents more similarity.
+
         else:
-           results = self._contexts_store.similarity_search_with_score(query, k=k)
+           results = self._contexts_store.similarity_search_with_score(query, k=k) # Returns also distance. Lower score represents more similarity.
         if not results:
             return None
         print(f"RESULTS: { results}")
         doc, score = results[0]
         print(f"SIMILARITY SCORE: {score}")
-        if score < threshold:  
-            return doc.id
+        if score <= threshold:  
+            print(f"RETURNED ID: {doc.id}")
+            return doc.id 
         return None
 
 
@@ -196,3 +200,32 @@ class ContextFactManager:
         store = self._get_facts_store(context_id)
         docs = store.get(include=["documents"])
         return list(zip(docs["ids"], docs["documents"]))
+    
+
+    def get_facts_embeddings_in_context(self, context_id: str):
+        """Return all facts in a given context."""
+        store = self._get_facts_store(context_id)
+        docs = store.get(include=["embeddings"])
+        return np.asarray(docs["embeddings"])
+
+
+    def get_storage(self):
+        contexts = self.get_contexts()
+        for cid, text in contexts:
+            print(f" \n  ***Context {cid} : {text}***")
+            facts = self.get_facts_in_context(cid)
+            print(f"    \n *Facts inside '{cid}' context:*")
+            for fid, text in facts:
+                print(f"  - {fid} : {text}")
+
+    def get_context_embedding(self, context_id: str) -> np.ndarray | None:
+        """Return the embedding for a given context."""
+        result = self._contexts_store.get(
+            ids=[context_id],
+            include=["embeddings"]
+        )
+
+        if not result["ids"] or result["embeddings"][0] is None:
+            return None
+
+        return np.asarray(result["embeddings"][0])
