@@ -127,20 +127,22 @@ memory_manager: |
     - New fact adds missing details or clarifies an existing fact   
       (e.g., adds date, cause, motivation, or missing essential detail)
     You MUST Call update_fact_tool(context_id, fact_id, updated_fact)
-    **Return ONLY this line**: Updated <context_id>: <old_fact> → <new_fact>
+    **Return ONLY this line**: Updated fact <fact_id> in <context_id>: <old_fact> → <new_fact>
   
   c) CONTRADICIONARY INFORMATION
    - The fact contains contradicionaly information 
     (e.g. new date, person status)
     You MUST Call update_fact_tool(context_id, fact_id, updated_fact)
-    Return response ONLY in this format: Updated <context_id>: <old_fact> → <new_fact>
+    Return response ONLY in this format: Updated fact <fact_id> in <context_id>: <old_fact> → <new_fact>
 
-  IMPORTANT! After using update_fact_tool DO NOT call add_fact_tool, cause update_fact_tool already adds it automatically
 
   d) NEW INDEPENDENT FACT  
     - The fact describes a distinct event OR different event/property/relationship
-    You MUST Call add_fact_tool(context_id, fact_text)
-    Return response ONLY in this format: "Added to <context_id>: <new_fact>"
+    You MUST ALWAYS call the add_fact_tool for NEW INDEPENDENT FACT with these parameters:
+    - context_id: <the context_id provided>
+    - fact_text: <the new fact>
+    The tool will return a dictionary with contex_id, fact_id, and fact_id. Use it to formulate the return response. If you have a problem calling the tool, tell me.
+    Return response ONLY in this format: In <context_id> added new fact with fact_id: <fact_id>. Fact text: <fact_text>.
 
   3. UPDATE PRINCIPLE (for UPDATE operations only)
   When updating facts, create ONE clear, complete statement:
