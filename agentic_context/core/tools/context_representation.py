@@ -15,7 +15,10 @@ import numpy as np
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.prompts import PromptTemplate
 from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
 
+load_dotenv("chatbot.env")
 
 class ContextRepresentation:
     """
@@ -36,10 +39,11 @@ class ContextRepresentation:
             embedding_model: HuggingFace embedding model name
         """
         self.context_type = context_type
-        self.llm = ChatOllama(model="llama3.2:3b")
+        self.llm = ChatOpenAI(model="gpt-4o-mini")
+        #self.llm = ChatOllama(model="llama3.2:3b") #TODO set as config too 
         self.embedding_model_name = embedding_model
 
-        # Embedding model for list[str] representation
+        # Embedding model for list[str] representation #TODO move to config too
         self.embedding_fn = HuggingFaceEmbeddings(
             model_name=self.embedding_model_name,
             model_kwargs={"device": "cuda"}

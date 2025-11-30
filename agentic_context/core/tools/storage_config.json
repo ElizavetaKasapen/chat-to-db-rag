@@ -1,4 +1,4 @@
 {
     "context_representation":"mean",
-    "persist_directory":"./created_storages/chroma_db_separate_context_mean"
+    "persist_directory":"./created_storages/small_test_dataset"
 }
