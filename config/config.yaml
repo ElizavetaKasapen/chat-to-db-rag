@@ -1,0 +1,57 @@
+storage_manager: 
+  context_type: "mean"
+
+  #if context type is summary or main_objects
+  model_provider: "anthropic" 
+  model_name: "claude-sonnet-4-20250514"
+  temperature: 0
+
+  search: "cosine"
+  context_similarity_threshold: 0.3 # functions return Distance -> lower score represents more similarity.
+  k_facts: 10
+  embeddings_model_provider: "huggingface" 
+  embedding_model: "all-MiniLM-L6-v2"
+  persist_directory: "./created_storages/demo"
+
+core:
+ questions_manager_agent: # tool calling is important!
+   model_provider: "anthropic" 
+   model_name: "claude-sonnet-4-20250514"
+   temperature: 0
+ facts_extractor_agent: # important to have structured_output!
+   model_provider: "anthropic" 
+   model_name: "claude-sonnet-4-20250514"
+   temperature: 0
+ memory_manager_agent: # tool calling is important!
+   model_provider: "anthropic" 
+   model_name: "claude-sonnet-4-20250514"
+   temperature: 0
+ supervisor_agent: # important to have structured_output!
+   model_provider: "anthropic" 
+   model_name: "claude-sonnet-4-20250514"
+   temperature: 0
+ chat_history_limit: 5 # how many past messages are considered
+
+
+
+evaluation:
+  storage: 
+    min_similarity: 0.85 # here the function returns similarity 
+    k_facts: 20
+    matches_output_path: "matches_output.txt"
+  answers:
+    one_lvl_dir: "one_lvl_facts"
+    benchmark_dir: "benchmark_dataset_small_split"
+    generated_facts_path: "generated_facts.json"
+    questions_path: "questions.json"
+    results_dir: "answer_estimation_results"
+
+
+
+
+
+
+
+
+
+

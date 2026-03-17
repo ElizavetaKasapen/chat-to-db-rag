@@ -3,6 +3,7 @@
 __pycache__
 .venv
 created_storages
-dataset
-check_db.py
+*dataset*
+generated_facts*
 __pycache__
+*results
