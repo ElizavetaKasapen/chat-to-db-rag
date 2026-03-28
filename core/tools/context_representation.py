@@ -14,11 +14,15 @@ from typing import Callable, List, Union, Dict
 import numpy as np
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.prompts import PromptTemplate
-from langchain_ollama import ChatOllama
-from langchain_openai import ChatOpenAI
+from utils.utils import init_llm, init_embeddings
+from config.config import get_storage_config #TODO check import 
+
 from dotenv import load_dotenv
 
-load_dotenv("chatbot.env")
+load_dotenv("config/chatbot.env")
+
+storage_config = get_storage_config()
+
 
 class ContextRepresentation:
     """
@@ -30,7 +34,7 @@ class ContextRepresentation:
         - "summary": LLM-generated concise summary
     """
 
-    def __init__(self, context_type: str, embedding_model: str = "all-MiniLM-L6-v2"):
+    def __init__(self, context_type: str, embedding_config, llm_config=None): 
         """
         Initialize context representation builder.
 
@@ -39,15 +43,10 @@ class ContextRepresentation:
             embedding_model: HuggingFace embedding model name
         """
         self.context_type = context_type
-        self.llm = ChatOpenAI(model="gpt-4o-mini")
-        #self.llm = ChatOllama(model="llama3.2:3b") #TODO set as config too 
-        self.embedding_model_name = embedding_model
+        if llm_config: self.llm = init_llm(**llm_config)
 
-        # Embedding model for list[str] representation #TODO move to config too
-        self.embedding_fn = HuggingFaceEmbeddings(
-            model_name=self.embedding_model_name,
-            model_kwargs={"device": "cuda"}
-        )
+        # Embedding model for list[str] representation
+        self.embedding_fn = init_embeddings(**embedding_config)
 
         # Strategy maps
         self._store_strategies: Dict[str, Callable] = {

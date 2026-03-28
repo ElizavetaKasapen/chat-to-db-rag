@@ -9,22 +9,36 @@ from os import path
 from langchain_core.tools import StructuredTool
 from .storage_manager import ContextFactManager
 from .context_representation import ContextRepresentation
-
-# Load config
-CONFIG_PATH = path.join(path.dirname(__file__), "storage_config.json") #TODO change config
+from config.config import get_storage_config
 
 
-def load_storage_config(path=CONFIG_PATH):
-    with open(path, "r") as f:
-        return json.load(f)
+config = get_storage_config()
 
-
-config = load_storage_config()
-
+kwargs = {}
 persist_directory = config["persist_directory"]
 context_strategy = config["context_representation"]
 
-context_representation_builder = ContextRepresentation(context_strategy)
+if context_strategy in ["main_objects", "summary"]:
+    model_provider = config.get("storage_config")
+    model_name =  config.get("model_name")
+    if not model_provider or not model_name:
+        raise ValueError(
+            "For 'main_objects' and 'summary' context strategies, "
+            "'model_provider' and 'model_name' must be specified."
+        )
+    kwargs["llm_config"] = {
+        "provider": model_provider,
+        "model": model_name,
+        "temperature": config.get("temperature", 0),
+        "context_size": config.get("context_size")  # optional
+    }
+
+kwargs["embedding_config"] = {
+        "provider": config.get("embeddings_model_provider"),
+        "model_name": config.get("embedding_model")
+    }
+
+context_representation_builder = ContextRepresentation(context_strategy, **kwargs)
 
 manager = ContextFactManager(
     persist_directory=persist_directory,

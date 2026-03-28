@@ -103,7 +103,6 @@ class ContextFactManager:
         "context_id": context_id,
         "facts": facts
          }
-        #return context_id
     
 
     def delete_context(self, context_id: str) -> str:
@@ -123,7 +122,7 @@ class ContextFactManager:
         print(f"fact_id from add_fact:{fact_id[0]}")
         fid = fact_id[0]
         return {"context_id": context_id, "fact_id":fid, "fact_text":fact_text}
-        #return f"In {context_id} added new fact with fact_id: {fact_id[0]}. Fact text: {fact_text}."
+    
 
     def update_fact(self, context_id: str, fact_id: str, new_text: str) -> str:
         """Modify a fact and recompute context summary."""
@@ -174,7 +173,7 @@ class ContextFactManager:
 
     # Search
 
-    def context_similarity_search(self, query, k=1, add_facts_mode = False,threshold=0.3): #TODO add mode, by default retrieval 0.4, 0.3 to save whne you look for similar context pass - exists. move to config - do 0.4 for retrieving data, 0.2 for memory manager
+    def context_similarity_search(self, query, k=1, add_facts_mode = False, threshold=0.3): #TODO add mode, by default retrieval 0.4, 0.3 to save whne you look for similar context pass - exists. move to config - do 0.4 for retrieving data, 0.2 for memory manager
         """Return context_id most similar to query (text or vector)."""
         if isinstance(query, np.ndarray):
            results = self._contexts_store.similarity_search_by_vector_with_relevance_scores( query.tolist(), k=k) #Returns Distance. Lower score represents more similarity.
