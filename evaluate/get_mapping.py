@@ -1,47 +1,6 @@
 import re
 import os
-
-
-# def extract_facts_dict(output, topic):
-#     results = []
-
-#     match_created_context = re.match(
-#         r"Created context '([^']+)' with \d+ facts?\. Stored facts: \[(.*)\]", output
-#     )
-#     if match_created_context:
-#         context_id = match_created_context.group(1)
-#         facts_str = match_created_context.group(2)
-#         facts = [f.strip().strip("'\"") for f in facts_str.split(",")]
-#         for fact in facts:
-#             results.append({"fact": fact, "context": context_id, "topic": topic})
-#         return results
-
-#     match_added = re.search(r"Added to (.+?): (.+)", output.strip())
-#     if match_added:
-#         context_id = match_added.group(1)
-#         new_fact = match_added.group(2).strip()
-#         results.append({"fact": new_fact, "context": context_id, "topic": topic})
-#         return results
-
-
-#     match_updated = re.match(r"Updated ([^:]+): (.+?) → (.+)", output)
-#     if match_updated:
-#         context_id = match_updated.group(1)
-#         new_fact = match_updated.group(3).strip()
-#         results.append({"fact": new_fact, "context": context_id, "topic": topic})
-#         return results
-
-#     match_added = re.match(r"Added to ([^:]+): (.+)", output)
-#     if match_added:
-#         context_id = match_added.group(1)
-#         new_fact = match_added.group(2).strip()
-#         results.append({"fact": new_fact, "context": context_id, "topic": topic})
-#         return results
-
-#     return results
-
 import json
-import os
 import ast
 
 
@@ -61,7 +20,7 @@ def extract_facts_dict(output, topic, facts_file_path="generated_facts.json"):
     # Load existing facts if needed
     if facts_file_path and os.path.exists(facts_file_path):
         with open(facts_file_path, "r", encoding="utf-8") as f:
-            facts_data = json.load(f)   # <-- list of facts
+            facts_data = json.load(f)   
     else:
         facts_data = []
     

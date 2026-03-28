@@ -22,6 +22,8 @@ from sklearn.metrics import (adjusted_rand_score, normalized_mutual_info_score,
 from collections import defaultdict
 from core.tools.storage_tools import (get_context_embedding_tool, get_contexts_tool, 
                                       get_facts_embeddings_in_context_tool)
+from config.config import get_storage_evaluation_config
+
 
 
 logging.basicConfig(
@@ -29,7 +31,18 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s : %(message)s"
 )
 
-output_file = "generated_facts.json"
+
+config = get_storage_evaluation_config()
+
+dataset_path = config["dataset_path"]
+matches_output_path = config["matches_output_path"]
+saved_metrics_path = config["saved_metrics_path"]
+
+min_similarity = config.get("min_similarity", 0.85)
+k_facts = config.get("k_facts", 20)
+generated_facts_path = config.get("generated_facts", "generated_facts.json")
+
+
 
 def load_text_files(root_dir):
     for folder, _, files in os.walk(root_dir):
@@ -151,7 +164,7 @@ def distinctiveness_score(fact: str, embeddings) -> float:
 
 
 def get_facts_importance_metrics(all_facts):
-    embeddings = HuggingFaceEmbeddings(
+    embeddings = HuggingFaceEmbeddings( #TODO also get from congif
         model_name="all-MiniLM-L6-v2",
         model_kwargs={"device": "cuda"}
     )
@@ -281,7 +294,7 @@ def main(dataset_path, saved_metrics_path = "all_metrics.json"):
         logging.info(f"\nProcessing: {folder_name}/{file_name}")
         article_start = time.time()
         response = process_user_input(text, chat_history=[])
-        extract_facts_dict(response, folder_name, output_file)
+        extract_facts_dict(response, folder_name, generated_facts_path)
 
         processed_articles += 1
         article_elapsed = time.time() - article_start
@@ -292,7 +305,7 @@ def main(dataset_path, saved_metrics_path = "all_metrics.json"):
 
     total_elapsed = time.time() - total_start
     logging.info(f"\nIngestion complete: {total_elapsed:.2f}s")
-    with open(output_file, "r", encoding="utf-8") as f:
+    with open(generated_facts_path, "r", encoding="utf-8") as f:
         all_facts = json.load(f)
     print(f"Extracted_facts:{all_facts}")
     n_facts = len(all_facts)
@@ -324,6 +337,5 @@ def main(dataset_path, saved_metrics_path = "all_metrics.json"):
         json.dump(all_metrics, f, ensure_ascii=False, indent=4)
 
 
-#TODO change this call (maybe do it as termonal args)
 # "small_dataset_science_articles"  "evaluation_results\\concat_metrics.json"
-main("small_dataset_science_articles","evaluation_results\\new_mean_objects_metrics.json") 
+main(dataset_path, saved_metrics_path) 
