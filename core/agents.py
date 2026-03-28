@@ -7,16 +7,12 @@ for fact extraction, memory management, and request routing.
 
 from typing import List
 from pydantic import BaseModel, Field
-from dotenv import load_dotenv
 import yaml
 from langchain.agents import create_agent
-from langchain_ollama import ChatOllama
-from langchain_openai import ChatOpenAI
-from langchain_anthropic import ChatAnthropic
-from langchain.chat_models import init_chat_model
-from os import path
-import json
 
+from os import path
+from utils.utils import init_llm
+from config.config import get_core_config
 from .tools.storage_tools import (add_fact_tool, update_fact_tool,
                                   context_similarity_search_tool, fact_similarity_search_tool
                                   )
@@ -30,56 +26,19 @@ PROMPT_FILE = path.join(path.dirname(__file__), "prompts.yaml")
 with open(PROMPT_FILE, "r", encoding="utf-8") as f:
     PROMPTS = yaml.safe_load(f)
 
+# Load config for agents
 
-model = ChatAnthropic(
-    model="claude-sonnet-4-20250514",
-    temperature=0)
-# Initialize LLM
+config = get_core_config()
 
-# model= ChatOpenAI(
-#         model="gpt-4o",
-#         temperature=0.0
-#     )
+questions_manager_config = config["questions_manager_agent"]
+facts_extractor_config = config["facts_extractor_agent"]
+memory_manager_config = config["memory_manager_agent"]
+supervisor_agent_config = config["supervisor_agent"]
 
-def load_config(path="config.json"):
-    with open(path, "r") as f:
-        return json.load(f)
-
-# Or change to llm = init_chat_model(model=config["chat_model"], 
-                            #   model_provider=config["model_provider"],
-                            #   temperature=0) 
-def load_llm():
-    cfg = load_config()
-
-    provider = cfg.get("llm_provider", "ollama").lower()
-    model_name = cfg.get("model_name", "gpt-oss:20b")
-    temperature = cfg.get("temperature", 0.0)
-
-    if provider == "ollama":
-        print(f"Loading Ollama model: {model_name}")
-        return ChatOllama(
-            model=model_name,
-            temperature=temperature
-        )
-
-    elif provider == "gpt":
-        print(f"Loading OpenAI GPT model: {model_name}")
-        # Load environment variables
-        load_dotenv("chatbot.env")
-        return ChatOpenAI(
-            model=model_name,
-            temperature=temperature
-        )
-
-    else:
-        raise ValueError(f"Unknown LLM provider: {provider}")
-
-
-model = load_llm()
 
 # Questions Manager Agent
 questions_manager_agent = create_agent(
-    model=model,
+    model=init_llm(**questions_manager_config),
     tools=[context_similarity_search_tool, fact_similarity_search_tool],
     system_prompt=PROMPTS["questions_manager"],
     name="questions_manager_agent"
@@ -91,9 +50,7 @@ class ExtractedFacts(BaseModel):
     facts: List[str] = Field(
         description="List of extracted facts in 'Subject: fact' format")
 
-
-#TODO make a different models for config 
-fact_extractor_llm = model.with_structured_output(ExtractedFacts)
+fact_extractor_llm = init_llm(**facts_extractor_config).with_structured_output(ExtractedFacts)
 
 
 def extract_facts_from_text(text: str) -> List[str]:
@@ -108,7 +65,7 @@ def extract_facts_from_text(text: str) -> List[str]:
 memory_manager_tools = [add_fact_tool, update_fact_tool]
 
 memory_manager_agent = create_agent(
-    model = model,
+    model = init_llm(**memory_manager_config),
     tools=memory_manager_tools,
     system_prompt=PROMPTS["memory_manager"],
     name="memory_manager_agent"
@@ -123,7 +80,7 @@ class SupervisorResponse(BaseModel):
         description="The name of agent to call: questions_manager_agent or extract_facts_from_text")
 
 
-supervisor_llm = model.with_structured_output(SupervisorResponse)
+supervisor_llm = init_llm(**supervisor_agent_config).with_structured_output(SupervisorResponse)
 
 
 def route_user_request(user_input: str, chat_history: List[str] = None) -> SupervisorResponse:
